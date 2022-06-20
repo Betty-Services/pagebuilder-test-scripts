@@ -1,0 +1,24 @@
+# dependencies
+/node_modules
+
+#local storage files
+/local-storage
+
+# misc
+.DS_Store
+.vscode/
+.nvmrc
+.tool-versions
+.idea
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+screenshots/*
+!screenshots/.gitkeep
+
+# swp files
+*.swp
+
+.env

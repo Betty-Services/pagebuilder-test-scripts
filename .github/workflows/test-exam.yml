@@ -1,0 +1,64 @@
+name: Test Exam
+on:
+  workflow_dispatch:
+    inputs:
+      app_identifier:
+        description: 'Appliction identifier'
+        required: true
+      username:
+        description: 'Username'
+        required: true
+      password:
+        description: 'Password'
+        required: true
+      filename:
+        description: 'Filename'
+        required: true
+      exam_type:
+        description: 'Exam type'
+        required: true
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # Skip downloading during yarn install
+  PLAYWRIGHT_BROWSERS_PATH: 0 # Places binaries to node_modules/@playwright/test
+  PLAYWRIGHT_JSON_OUTPUT_NAME: ./cache/${{ github.event.inputs.filename }}.json
+
+jobs:
+  test-exam:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        run: |
+          yarn install
+          npx playwright install
+
+      - name: Substitute JSON file
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'exam_config.json'
+        env:
+          app_identifier: ${{ github.event.inputs.app_identifier }}
+          username: ${{ github.event.inputs.username }}
+          password: ${{ github.event.inputs.password }}
+
+      - name: Create cache folder
+        run: mkdir cache
+
+      - name: Write results to cache folder
+        continue-on-error: true
+        run: npm run test:${{ github.event.inputs.exam_type }}
+
+      - name: Copy contents temporary folder to docs
+        run: cp -R cache/* ./docs
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v7 # You can change this to use a specific version.
+        with:
+          author_name: Betty Blocks
+          author_email: noreply@bettyblocks.com
+          message: 'result for ${{ github.event.inputs.app_identifier }} on ${{ github.event.inputs.exam_type }} exam '
+          add: '${{ github.event.inputs.filename }}.json'
+          cwd: './docs'
